@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
 import crypto from "node:crypto";
 
 try {
@@ -79,8 +80,20 @@ function parseId(value) {
   return Number.isInteger(id) && id > 0 ? id : null;
 }
 
+// only failed attempts count towards the limit
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  skipSuccessfulRequests: true,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: {
+    message: "Too many login attempts, please try again later"
+  }
+});
+
 // Login
-app.post("/api/login", async (req, res) => {
+app.post("/api/login", loginLimiter, async (req, res) => {
   const { email, password } = req.body;
 
   const user = users.find((item) => item.email === email);
