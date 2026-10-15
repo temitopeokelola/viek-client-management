@@ -52,6 +52,17 @@ function App() {
 
     localStorage.setItem("token", result.token);
     setToken(result.token);
+    setPassword("");
+    setMessage("");
+  }
+
+  function logout(text = "") {
+    localStorage.removeItem("token");
+    setToken(null);
+    setClients([]);
+    setProjects([]);
+    setSelectedClient("");
+    setMessage(text);
   }
 
   async function loadClients() {
@@ -189,7 +200,13 @@ function App() {
 
   return (
     <div className="container">
-      <h1>VIEK Client Management</h1>
+      <div className="header">
+        <h1>VIEK Client Management</h1>
+
+        <button onClick={() => logout()}>
+          Logout
+        </button>
+      </div>
 
       <div className="card">
         <h2>Add Client</h2>
