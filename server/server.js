@@ -1,9 +1,25 @@
 import express from "express";
 import cors from "cors";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import crypto from "node:crypto";
+
+try {
+  process.loadEnvFile();
+} catch {
+  // no .env file, use the real environment
+}
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
+
+let JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  // random per run, so tokens stop working when the server restarts
+  JWT_SECRET = crypto.randomBytes(32).toString("hex");
+  console.warn("JWT_SECRET is not set, using a random secret");
+}
 
 app.use(cors());
 app.use(express.json({ limit: "10kb" }));
@@ -70,8 +86,14 @@ app.post("/api/login", async (req, res) => {
     });
   }
 
+  const token = jwt.sign(
+    { sub: user.id, email: user.email },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
   res.json({
-    token: "demo-token",
+    token,
     user: {
       id: user.id,
       name: user.name,
@@ -82,11 +104,20 @@ app.post("/api/login", async (req, res) => {
 
 // Authentication middleware
 function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization;
+  const authHeader = req.headers.authorization || "";
+  const [scheme, token] = authHeader.split(" ");
 
-  if (authHeader !== "Bearer demo-token") {
+  if (scheme !== "Bearer" || !token) {
     return res.status(401).json({
       message: "Unauthorized"
+    });
+  }
+
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+  } catch {
+    return res.status(401).json({
+      message: "Session expired or invalid, please log in again"
     });
   }
 
