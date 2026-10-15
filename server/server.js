@@ -141,7 +141,7 @@ app.get("/api/projects", authenticate, (req, res) => {
 
   if (clientId) {
     result = projects.filter(
-      (project) => project.clientId === clientId
+      (project) => project.clientId === Number(clientId)
     );
   }
 
