@@ -17,7 +17,7 @@ function App() {
 
   const [clients, setClients] = useState([]);
 
-  const [projects, setProjects] = useState();
+  const [projects, setProjects] = useState([]);
 
   const [selectedClient, setSelectedClient] =
     useState("");
