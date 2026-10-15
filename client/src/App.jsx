@@ -155,6 +155,10 @@ function App() {
     if (result) {
       setMessage(result.message);
       loadClients();
+
+      if (String(id) === selectedClient) {
+        setSelectedClient("");
+      }
     }
   }
 
