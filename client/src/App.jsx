@@ -29,24 +29,31 @@ function App() {
   async function login(event) {
     event.preventDefault();
 
-    const response = await fetch(
-      `${API_URL}/login`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email,
-          password
-        })
-      }
-    );
+    let response;
 
-    const result = await response.json();
+    try {
+      response = await fetch(
+        `${API_URL}/login`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email,
+            password
+          })
+        }
+      );
+    } catch {
+      setMessage("Could not reach the server. Please try again.");
+      return;
+    }
+
+    const result = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      setMessage(result.message);
+      setMessage(result.message || "Login failed");
       return;
     }
 
@@ -65,59 +72,70 @@ function App() {
     setMessage(text);
   }
 
-  async function loadClients() {
-    const response = await fetch(
-      `${API_URL}/clients`,
-      {
+  // returns the response body, or null after showing an error
+  async function apiRequest(path, options = {}) {
+    let response;
+
+    try {
+      response = await fetch(`${API_URL}${path}`, {
+        ...options,
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         }
-      }
-    );
+      });
+    } catch {
+      setMessage("Could not reach the server. Please try again.");
+      return null;
+    }
 
-    const result = await response.json();
+    const result = await response.json().catch(() => ({}));
 
-    setClients(result.data);
+    if (response.status === 401) {
+      logout(result.message || "Please log in again");
+      return null;
+    }
+
+    if (!response.ok) {
+      setMessage(result.message || "Something went wrong");
+      return null;
+    }
+
+    return result;
+  }
+
+  async function loadClients() {
+    const result = await apiRequest("/clients");
+
+    if (result) {
+      setClients(result.data);
+    }
   }
 
   async function loadProjects() {
-    const url = selectedClient
-      ? `${API_URL}/projects?clientId=${selectedClient}`
-      : `${API_URL}/projects`;
+    const path = selectedClient
+      ? `/projects?clientId=${selectedClient}`
+      : "/projects";
 
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
+    const result = await apiRequest(path);
 
-    const result = await response.json();
-
-    setProjects(result.projects);
+    if (result) {
+      setProjects(result.projects);
+    }
   }
 
   async function addClient(event) {
     event.preventDefault();
 
-    const response = await fetch(
-      `${API_URL}/clients`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: clientName,
-          email: clientEmail
-        })
-      }
-    );
+    const result = await apiRequest("/clients", {
+      method: "POST",
+      body: JSON.stringify({
+        name: clientName,
+        email: clientEmail
+      })
+    });
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      setMessage(result.message);
+    if (!result) {
       return;
     }
 
@@ -130,21 +148,12 @@ function App() {
   }
 
   async function deleteClient(id) {
-    const response = await fetch(
-      `${API_URL}/clients/${id}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
+    const result = await apiRequest(`/clients/${id}`, {
+      method: "DELETE"
+    });
 
-    const result = await response.json();
-
-    setMessage(result.message);
-
-    if (response.ok) {
+    if (result) {
+      setMessage(result.message);
       loadClients();
     }
   }
