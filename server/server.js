@@ -72,6 +72,13 @@ const projects = [
   }
 ];
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function parseId(value) {
+  const id = Number(value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
 // Login
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
@@ -136,11 +143,28 @@ app.get("/api/clients", authenticate, (req, res) => {
 
 // Add client
 app.post("/api/clients", authenticate, (req, res) => {
-  const { name, email } = req.body;
+  const name =
+    typeof req.body.name === "string" ? req.body.name.trim() : "";
+  const email =
+    typeof req.body.email === "string"
+      ? req.body.email.trim().toLowerCase()
+      : "";
 
   if (!name || !email) {
     return res.status(400).json({
       message: "Name and email are required"
+    });
+  }
+
+  if (name.length > 100) {
+    return res.status(400).json({
+      message: "Name must be 100 characters or less"
+    });
+  }
+
+  if (email.length > 254 || !EMAIL_PATTERN.test(email)) {
+    return res.status(400).json({
+      message: "Please enter a valid email address"
     });
   }
 
@@ -159,7 +183,13 @@ app.post("/api/clients", authenticate, (req, res) => {
 
 // Delete client
 app.delete("/api/clients/:id", authenticate, (req, res) => {
-  const id = Number(req.params.id);
+  const id = parseId(req.params.id);
+
+  if (!id) {
+    return res.status(400).json({
+      message: "Invalid client id"
+    });
+  }
 
   const originalLength = clients.length;
 
@@ -185,8 +215,16 @@ app.get("/api/projects", authenticate, (req, res) => {
   let result = projects;
 
   if (clientId) {
+    const id = parseId(clientId);
+
+    if (!id) {
+      return res.status(400).json({
+        message: "Invalid client id"
+      });
+    }
+
     result = projects.filter(
-      (project) => project.clientId === Number(clientId)
+      (project) => project.clientId === id
     );
   }
 
