@@ -153,6 +153,12 @@ app.get("/api/projects", authenticate, (req, res) => {
   });
 });
 
+app.use((req, res) => {
+  res.status(404).json({
+    message: "Route not found"
+  });
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   if (err.type === "entity.parse.failed") {
