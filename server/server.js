@@ -168,6 +168,12 @@ app.post("/api/clients", authenticate, (req, res) => {
     });
   }
 
+  if (clients.some((client) => client.email === email)) {
+    return res.status(409).json({
+      message: "A client with this email already exists"
+    });
+  }
+
   const newClient = {
     id: nextClientId++,
     name,
