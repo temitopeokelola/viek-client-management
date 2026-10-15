@@ -161,6 +161,11 @@ function App() {
   useEffect(() => {
     if (token) {
       loadClients();
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (token) {
       loadProjects();
     }
   }, [token, selectedClient]);
