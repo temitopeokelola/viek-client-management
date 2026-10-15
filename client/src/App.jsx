@@ -70,7 +70,7 @@ function App() {
 
     const result = await response.json();
 
-    setClients(result.clients);
+    setClients(result.data);
   }
 
   async function loadProjects() {
