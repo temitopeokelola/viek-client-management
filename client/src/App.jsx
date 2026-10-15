@@ -26,10 +26,20 @@ function App() {
 
   const [message, setMessage] = useState("");
 
+  const [loadingClients, setLoadingClients] =
+    useState(false);
+
+  const [loadingProjects, setLoadingProjects] =
+    useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+
   async function login(event) {
     event.preventDefault();
 
     let response;
+
+    setSubmitting(true);
 
     try {
       response = await fetch(
@@ -48,6 +58,8 @@ function App() {
     } catch {
       setMessage("Could not reach the server. Please try again.");
       return;
+    } finally {
+      setSubmitting(false);
     }
 
     const result = await response.json().catch(() => ({}));
@@ -105,7 +117,9 @@ function App() {
   }
 
   async function loadClients() {
+    setLoadingClients(true);
     const result = await apiRequest("/clients");
+    setLoadingClients(false);
 
     if (result) {
       setClients(result.data);
@@ -117,7 +131,9 @@ function App() {
       ? `/projects?clientId=${selectedClient}`
       : "/projects";
 
+    setLoadingProjects(true);
     const result = await apiRequest(path);
+    setLoadingProjects(false);
 
     if (result) {
       setProjects(result.projects);
@@ -127,6 +143,8 @@ function App() {
   async function addClient(event) {
     event.preventDefault();
 
+    setSubmitting(true);
+
     const result = await apiRequest("/clients", {
       method: "POST",
       body: JSON.stringify({
@@ -134,6 +152,8 @@ function App() {
         email: clientEmail
       })
     });
+
+    setSubmitting(false);
 
     if (!result) {
       return;
@@ -201,8 +221,8 @@ function App() {
               placeholder="Password"
             />
 
-            <button type="submit">
-              Login
+            <button type="submit" disabled={submitting}>
+              {submitting ? "Logging in..." : "Login"}
             </button>
           </form>
 
@@ -247,8 +267,8 @@ function App() {
             placeholder="Client email"
           />
 
-          <button type="submit">
-            Add Client
+          <button type="submit" disabled={submitting}>
+            {submitting ? "Saving..." : "Add Client"}
           </button>
         </form>
 
@@ -262,7 +282,9 @@ function App() {
       <div className="card">
         <h2>Clients</h2>
 
-        {clients.length === 0 ? (
+        {loadingClients && clients.length === 0 ? (
+          <p>Loading clients...</p>
+        ) : clients.length === 0 ? (
           <p>No clients found.</p>
         ) : (
           <ul>
@@ -307,17 +329,23 @@ function App() {
           ))}
         </select>
 
-        <ul>
-          {projects.map((project) => (
-            <li key={project.id}>
-              <strong>{project.name}</strong>
+        {loadingProjects ? (
+          <p>Loading projects...</p>
+        ) : projects.length === 0 ? (
+          <p>No projects found.</p>
+        ) : (
+          <ul>
+            {projects.map((project) => (
+              <li key={project.id}>
+                <strong>{project.name}</strong>
 
-              <span>
-                Client ID: {project.clientId}
-              </span>
-            </li>
-          ))}
-        </ul>
+                <span>
+                  Client ID: {project.clientId}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );
