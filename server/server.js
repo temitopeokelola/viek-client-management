@@ -21,7 +21,10 @@ if (!JWT_SECRET) {
   console.warn("JWT_SECRET is not set, using a random secret");
 }
 
-app.use(cors());
+const CLIENT_ORIGIN =
+  process.env.CLIENT_ORIGIN || "http://localhost:5173";
+
+app.use(cors({ origin: CLIENT_ORIGIN }));
 app.use(express.json({ limit: "10kb" }));
 
 const users = [
