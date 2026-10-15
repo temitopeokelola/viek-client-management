@@ -68,7 +68,11 @@ app.post("/api/login", (req, res) => {
 
   res.json({
     token: "demo-token",
-    user
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    }
   });
 });
 
