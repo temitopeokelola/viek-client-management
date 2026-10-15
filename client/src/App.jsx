@@ -7,13 +7,9 @@ function App() {
     localStorage.getItem("token")
   );
 
-  const [email, setEmail] = useState(
-    "admin@viek.test"
-  );
+  const [email, setEmail] = useState("");
 
-  const [password, setPassword] = useState(
-    "password123"
-  );
+  const [password, setPassword] = useState("");
 
   const [clients, setClients] = useState([]);
 
