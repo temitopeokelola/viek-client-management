@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import bcrypt from "bcryptjs";
 
 const app = express();
 const PORT = 4000;
@@ -12,7 +13,9 @@ const users = [
     id: 1,
     name: "Admin User",
     email: "admin@viek.test",
-    password: "password123"
+    // bcrypt hash of the demo password
+    passwordHash:
+      "$2b$10$FcOQ3W0JJDjeeQslK39OPe3WCzUoiv4HqiE.03Fw6o20hnhlcKAKa"
   }
 ];
 
@@ -51,16 +54,17 @@ const projects = [
 ];
 
 // Login
-app.post("/api/login", (req, res) => {
+app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
 
-  const user = users.find(
-    (item) =>
-      item.email === email &&
-      item.password === password
-  );
+  const user = users.find((item) => item.email === email);
 
-  if (!user) {
+  const passwordMatches =
+    user &&
+    typeof password === "string" &&
+    (await bcrypt.compare(password, user.passwordHash));
+
+  if (!passwordMatches) {
     return res.status(401).json({
       message: "Invalid email or password"
     });
