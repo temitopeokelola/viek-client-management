@@ -29,6 +29,9 @@ let clients = [
   }
 ];
 
+// separate counter so ids are never reused after a delete
+let nextClientId = clients.length + 1;
+
 const projects = [
   {
     id: 1,
@@ -100,7 +103,7 @@ app.post("/api/clients", authenticate, (req, res) => {
   }
 
   const newClient = {
-    id: clients.length + 1,
+    id: nextClientId++,
     name,
     email
   };
